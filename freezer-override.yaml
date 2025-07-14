@@ -1,0 +1,80 @@
+esphome:
+  name: freezer-override
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  - platform: esphome
+    #password: "Gift-Laboring7-Sympathy"
+    password: ""
+
+wifi:
+  ssid: "NSA_Surveillance_Van42"
+  password: "pengepengeseddelalle"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Freezer-Override"
+    password: "MS5GJnI9ghBN"
+
+captive_portal:
+    
+one_wire:
+  - platform: gpio
+    pin: GPIO4 #D2
+
+substitutions:
+  freezer_relay_duration: "250ms"
+sensor:
+  - platform: dallas_temp
+    name: "Freezer Temperature"
+    id: freezer_temp
+    update_interval: 10s
+
+  - platform: adc
+    pin: A0
+    id: photo_voltage
+    name: "Photoresistor voltage"
+    update_interval: 1s
+    filters:
+      - lambda: |-
+          return x * 3.3;
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+    internal: true
+
+switch:
+  - platform: gpio
+    pin: GPIO5 # D1
+    id: freezer_relay
+    inverted: false
+    internal: true
+
+  - platform: template
+    name: "Freezer SuperFreeze Toggle"
+    id: superfreeze_toggle
+    optimistic: true
+    restore_mode: disabled
+    turn_on_action:
+      - switch.turn_on: freezer_relay
+      - delay: ${freezer_relay_duration}
+      - switch.turn_off: freezer_relay
+    turn_off_action:
+      - switch.turn_on: freezer_relay
+      - delay: ${freezer_relay_duration}
+      - switch.turn_off: freezer_relay
+
+binary_sensor:
+  - platform: template
+    name: "Superfreeze State"
+    id: superfreeze_state
+    lambda: |-
+      return id(photo_voltage).state > 1.0;
