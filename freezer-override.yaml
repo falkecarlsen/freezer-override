@@ -59,18 +59,28 @@ switch:
     internal: true
 
   - platform: template
-    name: "Freezer SuperFreeze Toggle"
-    id: superfreeze_toggle
-    optimistic: true
-    restore_mode: disabled
+    name: "Freezer SuperFreeze"
+    id: superfreeze_control
+    lambda: |-
+      return id(superfreeze_state).state;
     turn_on_action:
-      - switch.turn_on: freezer_relay
-      - delay: ${freezer_relay_duration}
-      - switch.turn_off: freezer_relay
+      - if:
+          condition:
+            lambda: 'return !id(superfreeze_state).state;'
+          then:
+            - logger.log: "Turning ON SuperFreeze (state was off)"
+            - switch.turn_on: freezer_relay
+            - delay: ${freezer_relay_duration}
+            - switch.turn_off: freezer_relay
     turn_off_action:
-      - switch.turn_on: freezer_relay
-      - delay: ${freezer_relay_duration}
-      - switch.turn_off: freezer_relay
+      - if:
+          condition:
+            lambda: 'return id(superfreeze_state).state;'
+          then:
+            - logger.log: "Turning OFF SuperFreeze (state was on)"
+            - switch.turn_on: freezer_relay
+            - delay: ${freezer_relay_duration}
+            - switch.turn_off: freezer_relay
 
 binary_sensor:
   - platform: template
